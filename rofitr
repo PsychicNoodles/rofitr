@@ -11,7 +11,7 @@
 
 ## Rofi general options
 # leave these empty or comment out to use system defaults:
-FONT="mono 10"
+# FONT="mono 10"
 WIDTH="60"
 LOCATION="2"
 YOFFSET="20"
@@ -69,13 +69,10 @@ rofi_cmd() {
 	rofi -dmenu "${params[@]}" "$@"
 }
 
-crow_cmd() {
-	[ -n "$ENGINE" ] && crowparams+=(-e "$ENGINE")
-	[ -n "$LOCALE" ] && crowparams+=(-l "$LOCALE")
-	[ "$SPEAK_TRANSLATION" = "true" ] && crowparams+=(-p)
-	[ "$SPEAK_SOURCE" = "true" ] && crowparams+=(-u)
+myougiden_cmd() {
+	myougiden_params+=(--tab)
 
-	crow "${crowparams[@]}" "$@"
+	myougiden "${myougiden_params[@]}" "$@"
 }
 
 format() {
@@ -89,18 +86,11 @@ format() {
 	esac
 }
 
-cklang() {
-	lslang=(
-		"af" "sq" "am" "ar" "hy" "az" "eu" "ba" "be" "bn" "bs" "bg" "ca" "yue" "ceb"
-		"zh-CN" "zh-TW" "co" "hr" "cs" "da" "nl" "en" "eo" "et" "fj" "fil" "fi" "fr"
-		"fy" "gl" "ka" "de" "el" "gu" "ht" "ha" "haw" "he" "mrj" "hi" "hmn" "hu" "is"
-		"ig" "id" "ga" "it" "ja" "jw" "kn" "kk" "km" "tlh" "tlh-Qaak" "ko" "ku" "ky" "lo"
-		"la" "lv" "apc" "lt" "lb" "mk" "mg" "ms" "ml" "mt" "mi" "mr" "mhr" "mn" "my" "ne"
-		"no" "ny" "pap" "ps" "fa" "pl" "pt" "pa" "otq" "ro" "ru" "sm" "gd" "sr-Cyrl"
-		"sr-Latin" "st" "sn" "sd" "si" "sk" "sl" "so" "es" "su" "sw" "sv" "tl" "ty" "tg"
-		"ta" "tt" "te" "th" "to" "tr" "udm" "uk" "ur" "uz" "vi" "cy" "xh" "yi" "yo" "yua"
-	)
-	printf '%s\n' "${lslang[@]}" | grep -x "$1"
+extent() {
+	extents=(whole beginning word partial auto)
+	extents_short=(w b o p a)
+	short=$(printf '%s\n' "${extents_short[@]}" | grep -x -n "$qwer" | cut -f1 -d:)
+	[ -n "${short}" ] && echo $extents[$short] || printf '%s\n' "${extents[@]}" | grep -x "$qwer"
 }
 
 esc() { sed 's|[][\\/.*^$]|\\&|g' <<< "$1" ;}
@@ -118,46 +108,68 @@ return_result() {
 
 while [ -n "$input" ]; do
 	case "$input" in
-		"?")	input="$(rofi_cmd -p "Usage" -l 0 -mesg "<span color='$CLR_RESULT'>$(help)</span>")" ;;
-		!)	input="$(tac "$HIST" | rofi_cmd -p "$PROMPT_HIST" -l "$HIST_LINES")"
-			[ "$input" = "!" ] && input="$(rofi_cmd -p "$PROMPT_TR" -l 0)" ;;
-		!!)	input=$(tail -n1 "$HIST") ;;
-		!!e)	input=$(printf "!e %s" "$(tail -n1 "$HIST")") ;;
-		!!s)	input=$(printf "!s %s" "$(tail -n1 "$HIST")") ;;
-		!d)	pattern="$(tac "$HIST" | rofi_cmd -p "$PROMPT_DEL" -l "$HIST_LINES")"
+		"?")
+			input="$(rofi_cmd -p "Usage" -l 0 -mesg "<span color='$CLR_RESULT'>$(help)</span>")"
+			unset QUERY_MODE CASE_SENSITIVE REGEXP EXTENT FREQUENT ;;
+		!)
+			input="$(tac "$HIST" | rofi_cmd -p "$PROMPT_HIST" -l "$HIST_LINES")"
+			[ "$input" = "!" ] && input="$(rofi_cmd -p "$PROMPT_TR" -l 0)"
+			unset QUERY_MODE CASE_SENSITIVE REGEXP EXTENT FREQUENT ;;
+		!!)
+			input=$(tail -n1 "$HIST")
+			unset QUERY_MODE CASE_SENSITIVE REGEXP EXTENT FREQUENT ;;
+		!!e)
+			input=$(printf "!e %s" "$(tail -n1 "$HIST")")
+			unset QUERY_MODE CASE_SENSITIVE REGEXP EXTENT FREQUENT ;;
+		!!s)
+			input=$(printf "!s %s" "$(tail -n1 "$HIST")")
+			unset QUERY_MODE CASE_SENSITIVE REGEXP EXTENT FREQUENT ;;
+		!d)
+			pattern="$(tac "$HIST" | rofi_cmd -p "$PROMPT_DEL" -l "$HIST_LINES")"
 			case "$pattern" in
 				!) input="$(rofi_cmd -p "$PROMPT_TR" -l 0)" ;;
 				!dd) printf '' > "$HIST" && exit 0 ;;
 				"") exit 0 ;;
 				*) sed -i "/^$(esc "$pattern")$/d" "$HIST"
-			esac ;;
-		??*:??*)
-			SOURCE=$(cklang "$(echo "$input" | awk -F':' '{print $1}')")
-			TARGET=$(cklang "$(echo "$input" | awk -F'[:| ]' '{print $2}')")
+			esac
+			unset QUERY_MODE CASE_SENSITIVE REGEXP EXTENT FREQUENT ;;
+		!k*)
+			# kanji mode
+			QUERY_MODE="--kanji"
+			input=$(echo "$input" | cut -d' ' -f2-) ;;
+		!r*)
+			# reading mode
+			QUERY_MODE="--reading"
+			input=$(echo "$input" | cut -d' ' -f2-) ;;
+		!g*)
+			# gloss/meaning mode
+			QUERY_MODE="--gloss"
+			input=$(echo "$input" | cut -d' ' -f2-) ;;
+		!x*)
+			# regexp
+			REGEXP="--regexp"
+			input=$(echo "$input" | cut -d' ' -f2-) ;;
+		!cs*)
+			# case sensitive
+			CASE_SENSITIVE="--case-sensitive"
+			input=$(echo "$input" | cut -d' ' -f2-) ;;
+		!e:?*)
+			# extent
+			raw=$(echo "$input" | awk -F':' '{print $1}')
+			extent=$(extent "$raw")
+			[ -n "$extent" ] && EXTENT=$extent ;;
+		!f*)
+			# frequent
+			FREQUENT="--frequent"
+			input=$(echo "$input" | cut -d' ' -f2-) ;;
+		!a*)
+			# abbreviation meaning
 			input=$(echo "$input" | cut -d' ' -f2-)
-			result=$(crow_cmd -s "${SOURCE:-en}" -t "${TARGET:-tr}" -- "$input" | format)
-			unset SOURCE TARGET
-			append_hist; return_result ;;
-		:??*)
-			TARGET=$(cklang "$(echo "$input" | awk -F'[:| ]' '{print $2}')")
-			input=$(echo "$input" | cut -d' ' -f2-)
-			result=$(crow_cmd -t "${TARGET:-tr}" -- "$input" | format)
-			unset TARGET
-			append_hist; return_result ;;
-		!e*)
-			input=$(echo "$input" | cut -d' ' -f2-)
-			result=$(crow_cmd -- "$input" | format ex)
-			append_hist; return_result ;;
-		!s*)
-			input=$(echo "$input" | cut -d' ' -f2-)
-			result=$(SPEAK_SOURCE="true" crow_cmd -- "$input" | format sel)
-			append_hist; return_result ;;
-		-s)
-			input=$(xclip -o | tr -d '\n'); [ -z "$input" ] && exit
-			result=$(crow_cmd -t "${TARGET:-tr}" -- "$input" | format)
+			result=$(myougiden -a "$input" | format abbrev)
 			append_hist; return_result ;;
 		*)
-			result=$(crow_cmd -s "${SOURCE:-en}" -t "${TARGET:-tr}" -- "$input" | format)
+			result=$(myougiden_cmd "$input" | format)
+			unset QUERY_MODE CASE_SENSITIVE REGEXP EXTENT FREQUENT
 			append_hist; return_result ;;
 	esac
 done
