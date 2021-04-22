@@ -23,12 +23,12 @@ BEGIN {
   # myougiden currently only seems to use red, cyan, yellow, and green
   # added colors from rasi theme
   COLORS["black"] = "black"
-  COLORS["red"] = "#fb4934"
+  COLORS["red"] = "#d79921"
   COLORS["green"] = "#a89984"
-  COLORS["yellow"] = "#d79921"
+  COLORS["yellow"] = "#cc241d"
   COLORS["blue"] = "blue"
   COLORS["magenta"] = "magenta"
-  COLORS["cyan"] = "#04b8ff"
+  COLORS["cyan"] = "#fabd2f"
   COLORS["white"] = "white"
 }
 {
