@@ -1,22 +1,22 @@
 BEGIN {
 	RS = "\033[[0-9;]+m|\n";
   FS = "\t";
-	FG_COLORS[30] = "Black"
-	FG_COLORS[31] = "Red"
-	FG_COLORS[32] = "Green"
-	FG_COLORS[33] = "Yellow"
-	FG_COLORS[34] = "Blue"
-	FG_COLORS[35] = "Magenta"
-	FG_COLORS[36] = "Cyan"
-	FG_COLORS[37] = "White"
-	BG_COLORS[40] = "Black"
-	BG_COLORS[41] = "Red"
-	BG_COLORS[42] = "Green"
-	BG_COLORS[43] = "Yellow"
-	BG_COLORS[44] = "Blue"
-	BG_COLORS[45] = "Magenta"
-	BG_COLORS[46] = "Cyan"
-	BG_COLORS[47] = "White"
+	FG_COLORS[30] = "black"
+	FG_COLORS[31] = "red"
+	FG_COLORS[32] = "green"
+	FG_COLORS[33] = "yellow"
+	FG_COLORS[34] = "blue"
+	FG_COLORS[35] = "magenta"
+	FG_COLORS[36] = "cyan"
+	FG_COLORS[37] = "white"
+	BG_COLORS[40] = "black"
+	BG_COLORS[41] = "red"
+	BG_COLORS[42] = "green"
+	BG_COLORS[43] = "yellow"
+	BG_COLORS[44] = "blue"
+	BG_COLORS[45] = "magenta"
+	BG_COLORS[46] = "cyan"
+	BG_COLORS[47] = "white"
 }
 {
   # trim whitespace
