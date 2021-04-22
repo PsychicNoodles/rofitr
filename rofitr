@@ -12,9 +12,9 @@
 ## Rofi general options
 # leave these empty or comment out to use system defaults:
 # FONT="mono 10"
-WIDTH="60"
-LOCATION="2"
-YOFFSET="20"
+# WIDTH="60"
+# LOCATION="2"
+# YOFFSET="20"
 
 # use alternative config and theme
 # CONFIG="~/.config/rofi/translate-config.rasi"
@@ -29,6 +29,8 @@ PROMPT_DEL=" delete"
 CLR_RESULT="#ebdbb2" # text color for translation
 CLR1="#b8bb26"
 CLR2="#1d2021"
+
+COLOR_CONVERT_SCRIPT="./color_convert.awk"
 
 HIST="${XDG_DATA_HOME:-~/.local/share}/rofi/rofitr_history"
 mkdir -p "$(dirname "$HIST")"
@@ -71,19 +73,18 @@ rofi_cmd() {
 
 myougiden_cmd() {
 	myougiden_params+=(--tab)
+	myougiden_params+=(--color yes)
 
 	myougiden "${myougiden_params[@]}" "$@"
 }
 
+convert_color() {
+	# strip trailing newline
+	head -c -1 | gawk -f $COLOR_CONVERT_SCRIPT
+}
+
 format() {
-	clean="s/^[\t]$//;/^$/d;s/\&/\&amp\;/g;s/</\&lt\;/g;s/>/\&gt\;/g;/ - translation options:$/d"
-	bold="s/^\(auxiliary verb\|abbreviation\|adjective\|adverb\|article\|conjunction\|contraction\|exclamation\|interjection\|noun\|particle\|prefix\|preposition\|pronoun\|suffix\|symbol\|verb\)$/<b>&<\/b>/"
-	trl="s/^\[ .*-\&gt\;.* \]$/<span foreground=\"$CLR1\"><i>&<\/i><\/span>/"
-	case "$1" in
-		ex) sed -e "$clean" -e "$bold" -ne '/- examples:/,$p' | head -n $RES_LINES ;;
-		sel) sed -e "$clean" -e '/ - examples:$/d' -e "$bold" -e "$trl" | sed -z 's/\n*(/ (/' | head -n $RES_LINES ;;
-		*) sed -e "$clean" -e '/- examples:$/Q' -e "$bold" -e "$trl" | sed -z 's/\n*(/ (/' | head -n $RES_LINES
-	esac
+	convert_color | head -n $RES_LINES
 }
 
 extent() {
@@ -169,6 +170,7 @@ while [ -n "$input" ]; do
 			append_hist; return_result ;;
 		*)
 			result=$(myougiden_cmd "$input" | format)
+			# result=$(echo $raw_result)
 			unset QUERY_MODE CASE_SENSITIVE REGEXP EXTENT FREQUENT
 			append_hist; return_result ;;
 	esac
