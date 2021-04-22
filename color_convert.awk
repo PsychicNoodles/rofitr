@@ -1,6 +1,8 @@
 BEGIN {
+  # ansi color code escape sequence
 	RS = "\033[[0-9;]+m|\n";
   FS = "\t";
+  # ansi color code values
 	FG_COLORS[30] = "black"
 	FG_COLORS[31] = "red"
 	FG_COLORS[32] = "green"
@@ -17,6 +19,15 @@ BEGIN {
 	BG_COLORS[45] = "magenta"
 	BG_COLORS[46] = "cyan"
 	BG_COLORS[47] = "white"
+  # custom values for ansi colors
+  COLORS["black"] = "black"
+  COLORS["red"] = "red"
+  COLORS["green"] = "green"
+  COLORS["yellow"] = "yellow"
+  COLORS["blue"] = "blue"
+  COLORS["magenta"] = "magenta"
+  COLORS["cyan"] = "cyan"
+  COLORS["white"] = "white"
 }
 {
   # trim whitespace
@@ -41,10 +52,10 @@ BEGIN {
         bold = ""
       }
       if (code in FG_COLORS) {
-        last_fg = sprintf("foreground='%s' ", FG_COLORS[code])
+        last_fg = sprintf("foreground='%s' ", COLORS[FG_COLORS[code]])
       }
       if (code in BG_COLORS) {
-        last_bg = sprintf("background='%s'", BG_COLORS[code])
+        last_bg = sprintf("background='%s'", COLORS[BG_COLORS[code]])
       }
     }
   }
